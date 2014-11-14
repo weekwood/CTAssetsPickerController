@@ -33,7 +33,7 @@
 @interface CTAssetsViewCell : UICollectionViewCell
 
 @property (nonatomic, assign, getter = isEnabled) BOOL enabled;
-
+@property (nonatomic, copy) NSString *title;
 - (void)bind:(ALAsset *)asset;
 
 @end

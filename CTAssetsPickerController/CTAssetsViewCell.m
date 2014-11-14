@@ -30,12 +30,13 @@
 
 
 
+
+
 @interface CTAssetsViewCell ()
 
 @property (nonatomic, strong) ALAsset *asset;
 @property (nonatomic, strong) UIImage *image;
 @property (nonatomic, copy) NSString *type;
-@property (nonatomic, copy) NSString *title;
 @property (nonatomic, strong) UIImage *videoImage;
 
 @end
@@ -61,7 +62,7 @@ static UIColor *disabledColor;
     videoIcon       = [UIImage imageNamed:@"CTAssetsPickerVideo"];
     titleColor      = [UIColor whiteColor];
     checkedIcon     = [UIImage imageNamed:@"CTAssetsPickerChecked"];
-    selectedColor   = [UIColor colorWithWhite:1 alpha:0.3];
+    selectedColor   = [UIColor colorWithRed:0.1 green:0.47 blue:0.71 alpha:0.7];
     disabledColor   = [UIColor colorWithWhite:1 alpha:0.9];
 }
 
@@ -86,6 +87,7 @@ static UIColor *disabledColor;
     
     if ([self.type isEqual:ALAssetTypeVideo])
         self.title = [NSDate timeDescriptionOfTimeInterval:[[asset valueForProperty:ALAssetPropertyDuration] doubleValue]];
+
 }
 
 - (void)setSelected:(BOOL)selected
@@ -169,8 +171,20 @@ static UIColor *disabledColor;
     CGContextRef context = UIGraphicsGetCurrentContext();
     CGContextSetFillColorWithColor(context, selectedColor.CGColor);
     CGContextFillRect(context, rect);
+    CGContextSetStrokeColorWithColor(context, selectedColor.CGColor);
+    CGContextSetLineWidth(context, 5);
+    CGContextStrokeRect(context,rect);
+    [checkedIcon drawAtPoint:CGPointMake(CGRectGetMaxX(rect) - checkedIcon.size.width, 0)];
     
-    [checkedIcon drawAtPoint:CGPointMake(CGRectGetMaxX(rect) - checkedIcon.size.width, CGRectGetMinY(rect))];
+    CGRect titleRect = CGRectMake(rect.size.width - checkedIcon.size.width, 0,checkedIcon.size.width, checkedIcon.size.height);
+    
+    NSMutableParagraphStyle *titleStyle = [[NSMutableParagraphStyle alloc] init];
+    titleStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+    titleStyle.alignment = NSTextAlignmentCenter;
+    [self.title drawInRect:titleRect
+            withAttributes:@{NSFontAttributeName : titleFont,
+                             NSForegroundColorAttributeName : titleColor,
+                             NSParagraphStyleAttributeName : titleStyle}];
 }
 
 

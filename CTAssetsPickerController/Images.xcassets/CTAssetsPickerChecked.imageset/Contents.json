@@ -3,12 +3,16 @@
     {
       "idiom" : "universal",
       "scale" : "1x",
-      "filename" : "CTAssetsPickerChecked.png"
+      "filename" : "btn_on.9.png"
     },
     {
       "idiom" : "universal",
       "scale" : "2x",
-      "filename" : "CTAssetsPickerChecked@2x.png"
+      "filename" : "btn_on.9@2x.png"
+    },
+    {
+      "idiom" : "universal",
+      "scale" : "3x"
     }
   ],
   "info" : {
