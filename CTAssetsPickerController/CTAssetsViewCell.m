@@ -39,11 +39,7 @@
 
 @property (nonatomic, strong) ALAsset *asset;
 @property (nonatomic, strong) UIImage *image;
-<<<<<<< HEAD
 @property (nonatomic, copy) NSString *type;
-=======
-@property (nonatomic, copy) NSString *title;
->>>>>>> pr/1
 @property (nonatomic, strong) UIImage *videoImage;
 
 @end
