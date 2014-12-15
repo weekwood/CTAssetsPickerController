@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ NSDateFormatter+timeIntervalFormatter.h
  
  The MIT License (MIT)
  
@@ -25,13 +25,13 @@
  
  */
 
-#import <UIKit/UIKit.h>
-#import <AssetsLibrary/AssetsLibrary.h>
+#import <Foundation/Foundation.h>
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
+@interface NSDateFormatter (timeIntervalFormatter)
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+- (NSString *)stringFromTimeInterval:(NSTimeInterval)timeInterval;
+- (NSString *)spellOutStringFromTimeInterval:(NSTimeInterval)timeInterval;
 
 @end

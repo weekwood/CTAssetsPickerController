@@ -28,12 +28,12 @@
  
 
 #import "CTAssetsPickerController.h"
+#import "CTAssetsPageViewController.h"
 #import "CTMasterViewController.h"
 
 
 @interface CTMasterViewController ()
-<UINavigationControllerDelegate, CTAssetsPickerControllerDelegate,
-UIPopoverControllerDelegate>
+<CTAssetsPickerControllerDelegate, UIPopoverControllerDelegate>
 
 @property (nonatomic, copy) NSArray *assets;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
@@ -137,8 +137,17 @@ UIPopoverControllerDelegate>
     cell.textLabel.text = [self.dateFormatter stringFromDate:[asset valueForProperty:ALAssetPropertyDate]];
     cell.detailTextLabel.text = [asset valueForProperty:ALAssetPropertyType];
     cell.imageView.image = [UIImage imageWithCGImage:asset.thumbnail];
+    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     
     return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    CTAssetsPageViewController *vc = [[CTAssetsPageViewController alloc] initWithAssets:self.assets];
+    vc.pageIndex = indexPath.row;
+    
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 
@@ -152,6 +161,11 @@ UIPopoverControllerDelegate>
 
 #pragma mark - Assets Picker Delegate
 
+- (BOOL)assetsPickerController:(CTAssetsPickerController *)picker isDefaultAssetsGroup:(ALAssetsGroup *)group
+{
+    return ([[group valueForProperty:ALAssetsGroupPropertyType] integerValue] == ALAssetsGroupSavedPhotos);
+}
+
 - (void)assetsPickerController:(CTAssetsPickerController *)picker didFinishPickingAssets:(NSArray *)assets
 {
     if (self.popover != nil)
@@ -163,7 +177,7 @@ UIPopoverControllerDelegate>
     [self.tableView reloadData];
 }
 
-- (BOOL)assetsPickerController:(CTAssetsPickerController *)picker shouldEnableAssetForSelection:(ALAsset *)asset
+- (BOOL)assetsPickerController:(CTAssetsPickerController *)picker shouldEnableAsset:(ALAsset *)asset
 {
     // Enable video clips if they are at least 5s
     if ([[asset valueForProperty:ALAssetPropertyType] isEqual:ALAssetTypeVideo])

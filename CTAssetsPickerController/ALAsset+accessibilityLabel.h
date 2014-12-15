@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ ALAsset+accessibilityLabel.h
  
  The MIT License (MIT)
  
@@ -25,13 +25,14 @@
  
  */
 
-#import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+
+@interface ALAsset (accessibilityLabel)
+
+- (NSString *)accessibilityLabel;
 
 @end

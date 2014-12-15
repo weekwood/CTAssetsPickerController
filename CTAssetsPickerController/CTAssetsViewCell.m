@@ -1,20 +1,20 @@
 /*
  CTAssetsViewCell.m
- 
+
  The MIT License (MIT)
- 
+
  Copyright (c) 2013 Clement CN Tsang
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
  in the Software without restriction, including without limitation the rights
  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  copies of the Software, and to permit persons to whom the Software is
  furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in
  all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,11 +22,14 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
- 
+
  */
 
 #import "CTAssetsViewCell.h"
-#import "NSDate+timeDescription.h"
+#import "ALAsset+assetType.h"
+#import "ALAsset+accessibilityLabel.h"
+#import "NSDateFormatter+timeIntervalFormatter.h"
+
 
 
 
@@ -36,7 +39,11 @@
 
 @property (nonatomic, strong) ALAsset *asset;
 @property (nonatomic, strong) UIImage *image;
+<<<<<<< HEAD
 @property (nonatomic, copy) NSString *type;
+=======
+@property (nonatomic, copy) NSString *title;
+>>>>>>> pr/1
 @property (nonatomic, strong) UIImage *videoImage;
 
 @end
@@ -75,18 +82,21 @@ static UIColor *disabledColor;
         self.accessibilityTraits    = UIAccessibilityTraitImage;
         self.enabled                = YES;
     }
-    
+
     return self;
 }
 
 - (void)bind:(ALAsset *)asset
 {
     self.asset  = asset;
-    self.type   = [asset valueForProperty:ALAssetPropertyType];
-    self.image  = (asset.thumbnail == NULL) ? [UIImage imageNamed:@"CTAssetsPickerEmpty"] : [UIImage imageWithCGImage:asset.thumbnail];
-    
-    if ([self.type isEqual:ALAssetTypeVideo])
-        self.title = [NSDate timeDescriptionOfTimeInterval:[[asset valueForProperty:ALAssetPropertyDuration] doubleValue]];
+    self.image  = (asset.thumbnail == NULL) ? [UIImage imageNamed:@"CTAssetsPickerEmptyCell"] : [UIImage imageWithCGImage:asset.thumbnail];
+
+
+    if ([self.asset isVideo])
+    {
+        NSDateFormatter *df = [[NSDateFormatter alloc] init];
+        self.title = [df stringFromTimeInterval:[[asset valueForProperty:ALAssetPropertyDuration] doubleValue]];
+    }
 
 }
 
@@ -102,15 +112,15 @@ static UIColor *disabledColor;
 - (void)drawRect:(CGRect)rect
 {
     [super drawRect:rect];
-    
+
     [self drawThumbnailInRect:rect];
-    
-    if ([self.type isEqual:ALAssetTypeVideo])
+
+    if ([self.asset isVideo])
         [self drawVideoMetaInRect:rect];
-    
+
     if (!self.isEnabled)
         [self drawDisabledViewInRect:rect];
-    
+
     else if (self.selected)
         [self drawSelectedViewInRect:rect];
 }
@@ -128,35 +138,35 @@ static UIColor *disabledColor;
         0.0, 0.0, 0.0, 0.8,
         0.0, 0.0, 0.0, 1.0
     };
-    
+
     CGFloat locations [] = {0.0, 0.75, 1.0};
-    
+
     CGColorSpaceRef baseSpace   = CGColorSpaceCreateDeviceRGB();
     CGGradientRef gradient      = CGGradientCreateWithColorComponents(baseSpace, colors, locations, 2);
-    
+
     CGContextRef context    = UIGraphicsGetCurrentContext();
-    
+
     CGFloat height          = rect.size.height;
     CGPoint startPoint      = CGPointMake(CGRectGetMidX(rect), height - titleHeight);
     CGPoint endPoint        = CGPointMake(CGRectGetMidX(rect), CGRectGetMaxY(rect));
-    
+
     CGContextDrawLinearGradient(context, gradient, startPoint, endPoint, kCGGradientDrawsBeforeStartLocation);
-    
+
     CGColorSpaceRelease(baseSpace);
     CGGradientRelease(gradient);
-    
+
     CGSize titleSize = [self.title sizeWithAttributes:@{NSFontAttributeName : titleFont}];
     CGRect titleRect = CGRectMake(rect.size.width - titleSize.width - 2, startPoint.y + (titleHeight - 12) / 2, titleSize.width, titleHeight);
-    
+
     NSMutableParagraphStyle *titleStyle = [[NSMutableParagraphStyle alloc] init];
     titleStyle.lineBreakMode = NSLineBreakByTruncatingTail;
-    
+
     [self.title drawInRect:titleRect
             withAttributes:@{NSFontAttributeName : titleFont,
                              NSForegroundColorAttributeName : titleColor,
                              NSParagraphStyleAttributeName : titleStyle}];
-    
-    [videoIcon drawAtPoint:CGPointMake(2, startPoint.y + (titleHeight - videoIcon.size.height) / 2)];
+
+    [videoIcon drawAtPoint:CGPointMake(4, startPoint.y + 1 + (titleHeight - videoIcon.size.height) / 2)];
 }
 
 - (void)drawDisabledViewInRect:(CGRect)rect
@@ -175,9 +185,9 @@ static UIColor *disabledColor;
     CGContextSetLineWidth(context, 5);
     CGContextStrokeRect(context,rect);
     [checkedIcon drawAtPoint:CGPointMake(CGRectGetMaxX(rect) - checkedIcon.size.width, 0)];
-    
+
     CGRect titleRect = CGRectMake(rect.size.width - checkedIcon.size.width, 0,checkedIcon.size.width, checkedIcon.size.height);
-    
+
     NSMutableParagraphStyle *titleStyle = [[NSMutableParagraphStyle alloc] init];
     titleStyle.lineBreakMode = NSLineBreakByTruncatingTail;
     titleStyle.alignment = NSTextAlignmentCenter;
@@ -192,41 +202,7 @@ static UIColor *disabledColor;
 
 - (NSString *)accessibilityLabel
 {
-    NSMutableArray *labels = [[NSMutableArray alloc] init];
-    
-    [labels addObject:[self typeLabel]];
-    [labels addObject:[self orientationLabel]];
-    [labels addObject:[self dateLabel]];
-    
-    return [labels componentsJoinedByString:@", "];
+    return self.asset.accessibilityLabel;
 }
-
-- (NSString *)typeLabel
-{
-    NSString *type = [self.asset valueForProperty:ALAssetPropertyType];
-    NSString *key  = ([type isEqual:ALAssetTypeVideo]) ? @"Video" : @"Photo";
-    return NSLocalizedString(key, nil);
-}
-
-- (NSString *)orientationLabel
-{
-    CGSize dimension = self.asset.defaultRepresentation.dimensions;
-    NSString *key    = (dimension.height >= dimension.width) ? @"Portrait" : @"Landscape";
-    return NSLocalizedString(key, nil);
-}
-
-- (NSString *)dateLabel
-{
-    NSDate *date = [self.asset valueForProperty:ALAssetPropertyDate];
-    
-    NSDateFormatter *df             = [[NSDateFormatter alloc] init];
-    df.locale                       = [NSLocale currentLocale];
-    df.dateStyle                    = NSDateFormatterMediumStyle;
-    df.timeStyle                    = NSDateFormatterShortStyle;
-    df.doesRelativeDateFormatting   = YES;
-    
-    return [df stringFromDate:date];
-}
-
 
 @end

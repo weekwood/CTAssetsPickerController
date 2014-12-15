@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ CTAssetsPageViewController.h
  
  The MIT License (MIT)
  
@@ -26,12 +26,34 @@
  */
 
 #import <UIKit/UIKit.h>
-#import <AssetsLibrary/AssetsLibrary.h>
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+
+
+/**
+ *  A view controller that shows selected photos and vidoes from user's photo library that let the user navigate the item page by page.
+ */
+@interface CTAssetsPageViewController : UIPageViewController
+
+/**
+ *  The index of the photo or video with the currently showing item.
+ */
+@property (nonatomic, assign) NSInteger pageIndex;
+
+
+/**
+ *  @name Creating a Assets Page View Controller
+ */
+
+/**
+ *  Initializes a newly created view controller with an array of asset items.
+ *
+ *  @param assets An array of `ALAsset` objects.
+ *
+ *  @return An instance of `CTAssetPageViewController` initialized to show the asset items in `assets`.
+ */
+- (id)initWithAssets:(NSArray *)assets;
 
 @end

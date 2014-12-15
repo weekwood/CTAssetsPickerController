@@ -25,11 +25,15 @@
  
  */
 
-#import "CTAssetsPickerConstants.h"
+#import "CTAssetsPickerCommon.h"
 #import "CTAssetsPickerController.h"
 #import "CTAssetsViewController.h"
 #import "CTAssetsViewCell.h"
 #import "CTAssetsSupplementaryView.h"
+#import "CTAssetsPageViewController.h"
+#import "CTAssetsViewControllerTransition.h"
+
+
 
 
 
@@ -78,10 +82,11 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
                 forSupplementaryViewOfKind:UICollectionElementKindSectionFooter
                        withReuseIdentifier:CTAssetsSupplementaryViewIdentifier];
         
-        self.preferredContentSize = kPopoverContentSize;
+        self.preferredContentSize = CTAssetPickerPopoverContentSize;
     }
     
     [self addNotificationObserver];
+    [self addGestureRecognizer];
     
     return self;
 }
@@ -110,7 +115,7 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
 
 - (CTAssetsPickerController *)picker
 {
-    return (CTAssetsPickerController *)self.navigationController;
+    return (CTAssetsPickerController *)self.navigationController.parentViewController;
 }
 
 
@@ -133,12 +138,15 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
 - (void)setupButtons
 {
     self.navigationItem.rightBarButtonItem =
-    [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"Done", nil)
+    [[UIBarButtonItem alloc] initWithTitle:NSLocalizedStringFromTable(@"Done", @"CTAssetsPickerController", nil)
                                      style:UIBarButtonItemStyleDone
                                     target:self.picker
                                     action:@selector(finishPickingAssets:)];
     
-    self.navigationItem.rightBarButtonItem.enabled = (self.picker.selectedAssets.count > 0);
+    if (self.picker.alwaysEnableDoneButton)
+        self.navigationItem.rightBarButtonItem.enabled = YES;
+    else
+        self.navigationItem.rightBarButtonItem.enabled = (self.picker.selectedAssets.count > 0);
 }
 
 - (void)setupToolbar
@@ -153,14 +161,26 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
     if (!self.assets)
         self.assets = [[NSMutableArray alloc] init];
     else
-        [self.assets removeAllObjects];
+        return;
     
     ALAssetsGroupEnumerationResultsBlock resultsBlock = ^(ALAsset *asset, NSUInteger index, BOOL *stop)
     {
         if (asset)
-            [self.assets addObject:asset];
+        {
+            BOOL shouldShowAsset;
+            
+            if ([self.picker.delegate respondsToSelector:@selector(assetsPickerController:shouldShowAsset:)])
+                shouldShowAsset = [self.picker.delegate assetsPickerController:self.picker shouldShowAsset:asset];
+            else
+                shouldShowAsset = YES;
+            
+            if (shouldShowAsset)
+                [self.assets addObject:asset];
+        }
         else
+        {
             [self reloadData];
+        }
     };
     
     [self.assetsGroup enumerateAssetsUsingBlock:resultsBlock];
@@ -172,20 +192,21 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
 - (UICollectionViewFlowLayout *)collectionViewFlowLayoutOfOrientation:(UIInterfaceOrientation)orientation
 {
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-    layout.itemSize             = kThumbnailSize;
-    layout.footerReferenceSize  = CGSizeMake(0, 44.0);
+    
+    layout.itemSize             = CTAssetThumbnailSize;
+    layout.footerReferenceSize  = CGSizeMake(0, 47.0);
     
     if (UIInterfaceOrientationIsLandscape(orientation) && (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad))
     {
         layout.sectionInset            = UIEdgeInsetsMake(9.0, 2.0, 0, 2.0);
-        layout.minimumInteritemSpacing = 3.0;
-        layout.minimumLineSpacing      = 3.0;
+        layout.minimumInteritemSpacing = (CTIPhone6Plus) ? 1.0 : ( (CTIPhone6) ? 2.0 : 3.0 );
+        layout.minimumLineSpacing      = (CTIPhone6Plus) ? 1.0 : ( (CTIPhone6) ? 2.0 : 3.0 );
     }
     else
     {
         layout.sectionInset            = UIEdgeInsetsMake(9.0, 0, 0, 0);
-        layout.minimumInteritemSpacing = 2.0;
-        layout.minimumLineSpacing      = 2.0;
+        layout.minimumInteritemSpacing = (CTIPhone6Plus) ? 0.5 : ( (CTIPhone6) ? 1.0 : 2.0 );
+        layout.minimumLineSpacing      = (CTIPhone6Plus) ? 0.5 : ( (CTIPhone6) ? 1.0 : 2.0 );
     }
     
     return layout;
@@ -211,7 +232,8 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
 
 - (void)removeNotificationObserver
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:ALAssetsLibraryChangedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:CTAssetsPickerSelectedAssetsChangedNotification object:nil];
 }
 
 
@@ -221,7 +243,7 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
 {
     // Reload all assets
     if (notification.userInfo == nil)
-        [self performSelectorOnMainThread:@selector(setupAssets) withObject:nil waitUntilDone:NO];
+        [self performSelectorOnMainThread:@selector(reloadAssets) withObject:nil waitUntilDone:NO];
     
     // Reload effected assets groups
     if (notification.userInfo.count > 0)
@@ -241,7 +263,7 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
     
     // Reload assets if current assets group is updated
     if (matchedGroups.count > 0)
-        [self performSelectorOnMainThread:@selector(setupAssets) withObject:nil waitUntilDone:NO];
+        [self performSelectorOnMainThread:@selector(reloadAssets) withObject:nil waitUntilDone:NO];
 }
 
 
@@ -254,8 +276,48 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
     
     [[self.toolbarItems objectAtIndex:1] setTitle:[self.picker toolbarTitle]];
     
-    [self.picker setToolbarHidden:(selectedAssets.count == 0) animated:YES];
+    [self.navigationController setToolbarHidden:(selectedAssets.count == 0) animated:YES];
 }
+
+
+
+#pragma mark - Gesture Recognizer
+
+- (void)addGestureRecognizer
+{
+    UILongPressGestureRecognizer *longPress =
+    [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(pushPageViewController:)];
+    
+    [self.collectionView addGestureRecognizer:longPress];
+}
+
+
+#pragma mark - Push Assets Page View Controller
+
+- (void)pushPageViewController:(UILongPressGestureRecognizer *)longPress
+{
+    if (longPress.state == UIGestureRecognizerStateBegan)
+    {
+        CGPoint point           = [longPress locationInView:self.collectionView];
+        NSIndexPath *indexPath  = [self.collectionView indexPathForItemAtPoint:point];
+
+        CTAssetsPageViewController *vc = [[CTAssetsPageViewController alloc] initWithAssets:self.assets];
+        vc.pageIndex = indexPath.item;
+
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+
+
+
+#pragma mark - Reload Assets
+
+- (void)reloadAssets
+{
+    self.assets = nil;
+    [self setupAssets];
+}
+
 
 
 #pragma mark - Reload Data
@@ -266,7 +328,7 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
     {
         [self.collectionView reloadData];
         
-        if (CGPointEqualToPoint(self.collectionView.contentOffset, CGPointZero))
+        if (self.collectionView.contentOffset.y <= 0)
             [self.collectionView setContentOffset:CGPointMake(0, self.collectionViewLayout.collectionViewContentSize.height)];
     }
     else
@@ -281,6 +343,14 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
 - (void)showNoAssets
 {
     self.collectionView.backgroundView = [self.picker noAssetsView];
+    [self setAccessibilityFocus];
+}
+
+- (void)setAccessibilityFocus
+{
+    self.collectionView.isAccessibilityElement  = YES;
+    self.collectionView.accessibilityLabel      = self.collectionView.backgroundView.accessibilityLabel;
+    UIAccessibilityPostNotification(UIAccessibilityScreenChangedNotification, self.collectionView);
 }
 
 
@@ -338,6 +408,9 @@ NSString * const CTAssetsSupplementaryViewIdentifier = @"CTAssetsSupplementaryVi
                                               forIndexPath:indexPath];
     
     [view bind:self.assets];
+    
+    if (self.assets.count == 0)
+        view.hidden = YES;
     
     return view;
 }

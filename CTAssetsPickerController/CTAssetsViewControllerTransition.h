@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ CTAssetsViewControllerTransition.h
  
  The MIT License (MIT)
  
@@ -26,12 +26,14 @@
  */
 
 #import <UIKit/UIKit.h>
-#import <AssetsLibrary/AssetsLibrary.h>
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+
+@interface CTAssetsViewControllerTransition : NSObject
+<UIViewControllerAnimatedTransitioning>
+
+@property (nonatomic, assign) UINavigationControllerOperation operation;
 
 @end

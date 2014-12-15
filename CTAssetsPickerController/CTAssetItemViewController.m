@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ CTAssetItemViewController.m
  
  The MIT License (MIT)
  
@@ -25,13 +25,45 @@
  
  */
 
-#import <UIKit/UIKit.h>
-#import <AssetsLibrary/AssetsLibrary.h>
+#import "CTAssetItemViewController.h"
+#import "CTAssetScrollView.h"
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+@interface CTAssetItemViewController ()
+
+@end
+
+
+
+
+
+@implementation CTAssetItemViewController
+
++ (CTAssetItemViewController *)assetItemViewControllerForPageIndex:(NSInteger)pageIndex;
+{
+    return [[self alloc] initWithPageIndex:pageIndex];
+}
+
+- (id)initWithPageIndex:(NSInteger)pageIndex
+{
+    if (self = [super init])
+    {
+        self.pageIndex = pageIndex;
+    }
+    
+    return self;
+}
+
+
+- (void)loadView
+{
+    CTAssetScrollView *scrollView   = [[CTAssetScrollView alloc] init];
+    scrollView.dataSource           = self.dataSource;
+    scrollView.index                = self.pageIndex;
+    
+    self.view = scrollView;
+}
 
 @end

@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ ALAsset+assetType.m
  
  The MIT License (MIT)
  
@@ -25,13 +25,20 @@
  
  */
 
-#import <UIKit/UIKit.h>
-#import <AssetsLibrary/AssetsLibrary.h>
+#import "ALAsset+assetType.h"
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
+@implementation ALAsset (assetType)
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+- (BOOL)isPhoto
+{
+    return [[self valueForProperty:ALAssetPropertyType] isEqual:ALAssetTypePhoto];
+}
+
+- (BOOL)isVideo
+{
+    return [[self valueForProperty:ALAssetPropertyType] isEqual:ALAssetTypeVideo];
+}
 
 @end

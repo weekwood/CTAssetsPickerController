@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ CTAssetScrollView.h
  
  The MIT License (MIT)
  
@@ -26,12 +26,19 @@
  */
 
 #import <UIKit/UIKit.h>
-#import <AssetsLibrary/AssetsLibrary.h>
+#import "CTAssetItemViewController.h"
 
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+extern NSString * const CTAssetScrollViewTappedNotification;
+
+
+
+
+@interface CTAssetScrollView : UIScrollView
+
+@property (nonatomic, weak) id<CTAssetItemViewControllerDataSource> dataSource;
+@property (nonatomic) NSUInteger index;
 
 @end

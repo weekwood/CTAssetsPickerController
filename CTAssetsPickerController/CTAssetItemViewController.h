@@ -1,5 +1,5 @@
 /*
- CTAssetsGroupViewCell.h
+ CTAssetItemViewController.h
  
  The MIT License (MIT)
  
@@ -28,10 +28,27 @@
 #import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
+@protocol CTAssetItemViewControllerDataSource;
 
 
-@interface CTAssetsGroupViewCell : UITableViewCell
 
-- (void)bind:(ALAssetsGroup *)assetsGroup showNumberOfAssets:(BOOL)showNumberOfAssets;
+
+
+@interface CTAssetItemViewController : UIViewController
+
++ (CTAssetItemViewController *)assetItemViewControllerForPageIndex:(NSInteger)pageIndex;
+
+@property (nonatomic, weak) id<CTAssetItemViewControllerDataSource> dataSource;
+@property (nonatomic, assign) NSInteger pageIndex;
+
+@end
+
+
+
+
+
+@protocol CTAssetItemViewControllerDataSource <NSObject>
+@required
+- (ALAsset *)assetAtIndex:(NSUInteger)index;
 
 @end
